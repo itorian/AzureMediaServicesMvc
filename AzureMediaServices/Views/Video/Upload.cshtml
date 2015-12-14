@@ -1,0 +1,22 @@
+﻿@{
+    ViewBag.Title = "Azure Media Services - Upload Video";
+}
+
+<link href="~/Content/themes/base/jquery-ui.css" rel="stylesheet" />
+<script src="~/Scripts/jquery-ui-1.8.24.min.js"></script>
+<script src="~/Scripts/azure-media-services-upload.js"></script>
+
+<h2>@ViewBag.Title</h2>
+
+<br /><br />
+
+@using (Html.BeginForm())
+{
+    <input type="file" id="selectFile" value="" />
+    <br />
+    <input type="button" id="fileUpload" name="fileUpload" value="Upload" />
+    <br /><br />
+    <div id="progressBar" style="background-color: grey"></div>
+    <br /><br />
+    <label id="statusMessage" style="color:red;font-size: 50px;"></label>
+}

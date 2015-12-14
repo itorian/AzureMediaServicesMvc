@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<AssetFiles xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://schemas.microsoft.com/windowsazure/mediaservices/2014/07/mediaencoder/inputmetadata">
+  <AssetFile Name="TestClip.mp4" Size="409376" Duration="PT3.901S" NumberOfStreams="2" FormatNames="mov,mp4,m4a,3gp,3g2,mj2" FormatVerboseName="QuickTime / MOV" StartTime="PT0S" OverallBitRate="839">
+    <VideoTracks>
+      <VideoTrack Id="0" Codec="h264" CodecLongName="H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10" TimeBase="1/24000" NumberOfFrames="93" StartTime="PT0S" Duration="PT3.875S" FourCC="avc1" Profile="Main" Level="3.1" PixelFormat="yuv420p" Width="1280" Height="720" DisplayAspectRatioNumerator="16" DisplayAspectRatioDenominator="9" SampleAspectRatioNumerator="1" SampleAspectRatioDenominator="1" FrameRate="24" Bitrate="710" HasBFrames="0">
+        <Disposition Default="1" Dub="0" Original="0" Comment="0" Lyrics="0" Karaoke="0" Forced="0" HearingImpaired="0" VisualImpaired="0" CleanEffects="0" AttachedPic="0" />
+        <Metadata key="creation_time" value="2015-10-05 10:03:38" />
+        <Metadata key="language" value="eng" />
+        <Metadata key="handler_name" value="Mainconcept MP4 Video Media Handler" />
+      </VideoTrack>
+    </VideoTracks>
+    <AudioTracks>
+      <AudioTrack Id="1" Codec="aac" CodecLongName="AAC (Advanced Audio Coding)" TimeBase="1/44100" NumberOfFrames="168" StartTime="PT0S" Duration="PT3.901S" SampleFormat="fltp" ChannelLayout="stereo" Channels="2" SamplingRate="44100" Bitrate="123" BitsPerSample="0">
+        <Disposition Default="1" Dub="0" Original="0" Comment="0" Lyrics="0" Karaoke="0" Forced="0" HearingImpaired="0" VisualImpaired="0" CleanEffects="0" AttachedPic="0" />
+        <Metadata key="creation_time" value="2015-10-05 10:03:38" />
+        <Metadata key="language" value="eng" />
+        <Metadata key="handler_name" value="Mainconcept MP4 Sound Media Handler" />
+      </AudioTrack>
+    </AudioTracks>
+    <Metadata key="major_brand" value="mp42" />
+    <Metadata key="minor_version" value="0" />
+    <Metadata key="compatible_brands" value="isommp42" />
+    <Metadata key="creation_time" value="2015-10-05 10:03:37" />
+  </AssetFile>
+</AssetFiles>

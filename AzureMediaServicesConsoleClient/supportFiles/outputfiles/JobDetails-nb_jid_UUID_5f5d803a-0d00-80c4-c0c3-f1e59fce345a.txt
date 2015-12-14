@@ -1,0 +1,5 @@
+
+Job ID: nb:jid:UUID:5f5d803a-0d00-80c4-c0c3-f1e59fce345a
+Job Name: My encoding job
+Job submitted (client UTC time): 12/11/2015 6:13:32 AM
+Media Services account name: csharpcornerdemo

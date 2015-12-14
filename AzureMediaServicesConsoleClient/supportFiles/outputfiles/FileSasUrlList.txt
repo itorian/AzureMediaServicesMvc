@@ -1,0 +1,8 @@
+https://csharpcornerdemomediaser.blob.core.windows.net/asset-5f5d803a-0d00-80c4-c0cd-f1e59fce345a/TestClip_manifest.xml?sv=2012-02-12&sr=c&si=e82e2d5f-a540-4749-8667-52288718fe24&sig=E3b8ZQRZ5vDshRYyjpESTNhpk3uXgxAKiEdgGWgzMVA%3D&st=2015-12-11T06%3A09%3A34Z&se=2016-01-10T06%3A09%3A34Z
+
+https://csharpcornerdemomediaser.blob.core.windows.net/asset-5f5d803a-0d00-80c4-c0cd-f1e59fce345a/TestClip_H264_4500kbps_AAC_und_ch2_128kbps.mp4?sv=2012-02-12&sr=c&si=e82e2d5f-a540-4749-8667-52288718fe24&sig=E3b8ZQRZ5vDshRYyjpESTNhpk3uXgxAKiEdgGWgzMVA%3D&st=2015-12-11T06%3A09%3A34Z&se=2016-01-10T06%3A09%3A34Z
+
+https://csharpcornerdemomediaser.blob.core.windows.net/asset-5f5d803a-0d00-80c4-c0cd-f1e59fce345a/TestClip.ism?sv=2012-02-12&sr=c&si=e82e2d5f-a540-4749-8667-52288718fe24&sig=E3b8ZQRZ5vDshRYyjpESTNhpk3uXgxAKiEdgGWgzMVA%3D&st=2015-12-11T06%3A09%3A34Z&se=2016-01-10T06%3A09%3A34Z
+
+https://csharpcornerdemomediaser.blob.core.windows.net/asset-5f5d803a-0d00-80c4-c0cd-f1e59fce345a/5f5d803a-0d00-80c4-9f41-f1e59fce2e58_metadata.xml?sv=2012-02-12&sr=c&si=e82e2d5f-a540-4749-8667-52288718fe24&sig=E3b8ZQRZ5vDshRYyjpESTNhpk3uXgxAKiEdgGWgzMVA%3D&st=2015-12-11T06%3A09%3A34Z&se=2016-01-10T06%3A09%3A34Z
+
