@@ -5,8 +5,6 @@ VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AzureMediaServicesMVC", "AzureMediaServices\AzureMediaServicesMVC.csproj", "{BA6C2C9F-56A3-4954-919E-59C03243DE93}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AzureMediaServicesConsoleClient", "AzureMediaServicesConsoleClient\AzureMediaServicesConsoleClient.csproj", "{6A4E2DEE-0E62-4853-BD21-26EC44FE354D}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -17,27 +15,11 @@ Global
 		{BA6C2C9F-56A3-4954-919E-59C03243DE93}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BA6C2C9F-56A3-4954-919E-59C03243DE93}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BA6C2C9F-56A3-4954-919E-59C03243DE93}.Release|Any CPU.Build.0 = Release|Any CPU
-		{6A4E2DEE-0E62-4853-BD21-26EC44FE354D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{6A4E2DEE-0E62-4853-BD21-26EC44FE354D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{6A4E2DEE-0E62-4853-BD21-26EC44FE354D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{6A4E2DEE-0E62-4853-BD21-26EC44FE354D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		EnterpriseLibraryConfigurationToolBinariesPath = packages\TransientFaultHandling.Core.5.1.1209.1\lib\NET4
-	EndGlobalSection
-	GlobalSection(TeamFoundationVersionControl) = preSolution
-		SccNumberOfProjects = 3
-		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
-		SccTeamFoundationServer = https://itorian.visualstudio.com/defaultcollection
-		SccLocalPath0 = .
-		SccProjectUniqueName1 = AzureMediaServices\\AzureMediaServicesMVC.csproj
-		SccProjectName1 = AzureMediaServices
-		SccLocalPath1 = AzureMediaServices
-		SccProjectUniqueName2 = AzureMediaServicesConsoleClient\\AzureMediaServicesConsoleClient.csproj
-		SccProjectName2 = AzureMediaServicesConsoleClient
-		SccLocalPath2 = AzureMediaServicesConsoleClient
 	EndGlobalSection
 EndGlobal
