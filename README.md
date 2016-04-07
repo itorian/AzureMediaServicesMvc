@@ -11,4 +11,4 @@ Note: You need to open web.config file in MVC project and use your storage and m
 
 <img src="https://github.com/itorian/Azure-Media-Services---Upload-and-Play-Videos-in-MVC/blob/master/AzureMediaServices/Slide/screentshot%20of%20output.jpg"/>
 
-Session on AMS: http://www.c-sharpcorner.com/Events/204/learn-ioc-di-media-services-with-mvc-net-garbage-collect.aspx
+My session on Azure Media Services: http://www.c-sharpcorner.com/Events/204/learn-ioc-di-media-services-with-mvc-net-garbage-collect.aspx
