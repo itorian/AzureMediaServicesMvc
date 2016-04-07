@@ -8,3 +8,7 @@ You can see job status
 You can play your uploaded video
 
 Note: You need to open web.config file in MVC project and use your storage and media service credentials.
+
+
+
+Session on AMS: http://www.c-sharpcorner.com/Events/204/learn-ioc-di-media-services-with-mvc-net-garbage-collect.aspx
