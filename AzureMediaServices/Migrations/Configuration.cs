@@ -10,7 +10,6 @@ namespace AzureMediaServices.Migrations
         public Configuration()
         {
             AutomaticMigrationsEnabled = false;
-            ContextKey = "AzureMediaServices.Models.AzureMediaServicesContext";
         }
 
         protected override void Seed(AzureMediaServices.Models.AzureMediaServicesContext context)

@@ -153,10 +153,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="App_Data\AzureMediaServicesContext-20151211103941.mdf" />
-    <Content Include="App_Data\AzureMediaServicesContext-20151211103941_log.ldf">
-      <DependentUpon>AzureMediaServicesContext-20151211103941.mdf</DependentUpon>
-    </Content>
     <Content Include="Content\BigBuckBunny.mp4" />
     <Content Include="Content\bootstrap.css" />
     <Content Include="Content\bootstrap.min.css" />
@@ -233,7 +229,9 @@
     <Content Include="Scripts\jquery.validate.unobtrusive.js" />
     <Content Include="Scripts\jquery.validate.unobtrusive.min.js" />
     <Content Include="Scripts\modernizr-2.6.2.js" />
-    <Content Include="Web.config" />
+    <Content Include="Web.config">
+      <SubType>Designer</SubType>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App_Start\RouteConfig.cs" />
@@ -242,13 +240,9 @@
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
-    <Compile Include="Migrations\201512110515068_InitialCreate.cs" />
-    <Compile Include="Migrations\201512110515068_InitialCreate.Designer.cs">
-      <DependentUpon>201512110515068_InitialCreate.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Migrations\201512121155561_assetIdAdded.cs" />
-    <Compile Include="Migrations\201512121155561_assetIdAdded.Designer.cs">
-      <DependentUpon>201512121155561_assetIdAdded.cs</DependentUpon>
+    <Compile Include="Migrations\201607070455566_generateInitDatabase.cs" />
+    <Compile Include="Migrations\201607070455566_generateInitDatabase.Designer.cs">
+      <DependentUpon>201607070455566_generateInitDatabase.cs</DependentUpon>
     </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\AzureMediaServicesContext.cs" />
@@ -280,12 +274,12 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Migrations\201512110515068_InitialCreate.resx">
-      <DependentUpon>201512110515068_InitialCreate.cs</DependentUpon>
+    <EmbeddedResource Include="Migrations\201607070455566_generateInitDatabase.resx">
+      <DependentUpon>201607070455566_generateInitDatabase.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Migrations\201512121155561_assetIdAdded.resx">
-      <DependentUpon>201512121155561_assetIdAdded.cs</DependentUpon>
-    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="App_Data\" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
