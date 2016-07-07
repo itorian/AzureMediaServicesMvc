@@ -218,31 +218,46 @@ namespace AzureMediaServices.Controllers
             try
             {
                 CloudMediaContext context = new CloudMediaContext(mediaAccountName, mediaAccountKey);
-                IAsset asset = GetAssetById(context, assetId);
+                IAsset inputAsset = GetAssetById(context, assetId);
 
-                IJob job = context.Jobs.CreateWithSingleTask(MediaProcessorNames.AzureMediaEncoder,
-                    MediaEncoderTaskPresetStrings.H264AdaptiveBitrateMP4Set720p,
-                    asset,
-                    "UploadedVideo-" + Guid.NewGuid().ToString() + "-Adaptive-Bitrate-MP4",
-                    AssetCreationOptions.None);
+                // Without preset (say default preset), works very well
+                //IJob job = context.Jobs.CreateWithSingleTask(MediaProcessorNames.AzureMediaEncoder,
+                //    MediaEncoderTaskPresetStrings.H264AdaptiveBitrateMP4Set720p,
+                //    asset,
+                //    "UploadedVideo-" + Guid.NewGuid().ToString() + "-Adaptive-Bitrate-MP4",
+                //    AssetCreationOptions.None);
+                //job.Submit();
+                //IAsset encodedOutputAsset = job.OutputMediaAssets[0];
+                //string smoothStreamingUri = PublishAssetGetURLs(encodedOutputAsset, fileName);
+                //string assetDetails = "MediaServiceFileName:" + encodedOutputAsset.Name + ", MediaServiceContainerUri:" 
+                //    + encodedOutputAsset.Uri + ", AssetId:" + encodedOutputAsset.Id;
 
+
+                //// XML Preset
+                string name = "UploadedVideo-" + Guid.NewGuid().ToString();
+                IJob job = context.Jobs.Create(name);
+                IMediaProcessor processor = GetLatestMediaProcessorByName("Media Encoder Standard", context);
+                string configuration = System.IO.File.ReadAllText(HttpContext.Server.MapPath("~/MediaServicesCustomPreset.xml"));
+                ITask task = job.Tasks.AddNew(name + "- encoding task", processor, configuration, TaskOptions.None);
+                task.InputAssets.Add(inputAsset);
+                task.OutputAssets.AddNew(name + "-Adaptive-Bitrate-MP4", AssetCreationOptions.None);
                 job.Submit();
-
-                IAsset encodedAsset = job.OutputMediaAssets[0];
+                IAsset encodedOutputAsset = job.OutputMediaAssets[0];
+                string smoothStreamingUri = PublishAssetGetURLs(encodedOutputAsset, fileName);
+                string assetDetails = "MediaServiceFileName:" + encodedOutputAsset.Name + ", MediaServiceContainerUri:" 
+                    + encodedOutputAsset.Uri + ", AssetId:" + encodedOutputAsset.Id;
 
 
                 //// Encryption (AES or DRM)
                 // Encode outputAsset with AES Key
                 //string token = AESEncryption.CreateAESEncryption(context, encodedAsset);
 
-                string smoothStreamingUri = PublishAssetGetURLs(encodedAsset, fileName);
-                string assetDetails = "MediaServiceFileName:" + encodedAsset.Name + ", MediaServiceContainerUri:" + encodedAsset.Uri + ", AssetId:" + encodedAsset.Id;
 
                 // Save video URI in database
                 AzureMediaServicesContext db = new AzureMediaServicesContext();
                 Video video = new Video();
                 video.Id = 0;
-                video.AssetId = encodedAsset.Id;
+                video.AssetId = encodedOutputAsset.Id;
                 video.VideoURI = GetWithoutHttp(smoothStreamingUri);
                 db.Videos.Add(video);
                 db.SaveChanges();
@@ -250,8 +265,8 @@ namespace AzureMediaServices.Controllers
                 return Json(new
                 {
                     error = false,
-                    message = "Encoding scheduled with Job Id " + job.Id + ". Encoded output Asset Id: " + encodedAsset.Id,
-                    assetId = encodedAsset.Id,
+                    message = "Encoding scheduled with Job Id " + job.Id + ". Encoded output Asset Id: " + encodedOutputAsset.Id,
+                    assetId = encodedOutputAsset.Id,
                     jobId = job.Id
                 });
             }
@@ -263,6 +278,17 @@ namespace AzureMediaServices.Controllers
                     message = "Error occured in encoding."
                 });
             }
+        }
+
+        private static IMediaProcessor GetLatestMediaProcessorByName(string mediaProcessorName, CloudMediaContext _context)
+        {
+            var processor = _context.MediaProcessors.Where(p => p.Name == mediaProcessorName).
+            ToList().OrderBy(p => new Version(p.Version)).LastOrDefault();
+
+            if (processor == null)
+                throw new ArgumentException(string.Format("Unknown media processor", mediaProcessorName));
+
+            return processor;
         }
 
         private string GetWithoutHttp(string smoothStreamingUri)
