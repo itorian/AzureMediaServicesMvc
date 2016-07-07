@@ -229,6 +229,9 @@
     <Content Include="Scripts\jquery.validate.unobtrusive.js" />
     <Content Include="Scripts\jquery.validate.unobtrusive.min.js" />
     <Content Include="Scripts\modernizr-2.6.2.js" />
+    <Content Include="Slide\encoding-completed.png" />
+    <Content Include="Slide\screentshot of output.jpg" />
+    <Content Include="Slide\upload-inprogress.png" />
     <Content Include="Web.config">
       <SubType>Designer</SubType>
     </Content>
