@@ -7,13 +7,13 @@ namespace AzureMediaServices.Migrations
     using System.Resources;
     
     [GeneratedCode("EntityFramework.Migrations", "6.1.3-40302")]
-    public sealed partial class assetIdAdded : IMigrationMetadata
+    public sealed partial class generateInitDatabase : IMigrationMetadata
     {
-        private readonly ResourceManager Resources = new ResourceManager(typeof(assetIdAdded));
+        private readonly ResourceManager Resources = new ResourceManager(typeof(generateInitDatabase));
         
         string IMigrationMetadata.Id
         {
-            get { return "201512121155561_assetIdAdded"; }
+            get { return "201607070455566_generateInitDatabase"; }
         }
         
         string IMigrationMetadata.Source
