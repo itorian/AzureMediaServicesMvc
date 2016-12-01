@@ -197,13 +197,15 @@ namespace AzureMediaServices.Controllers
             // Refresh the asset.
             asset = context.Assets.Where(a => a.Id == asset.Id).FirstOrDefault();
 
-            var ismAssetFiles = asset.AssetFiles.ToList().Where(f => f.Name.EndsWith(".mp4", StringComparison.OrdinalIgnoreCase)).ToArray();
+            //var ismAssetFiles = asset.AssetFiles.ToList().Where(f => f.Name.EndsWith(".mp4", StringComparison.OrdinalIgnoreCase)).ToArray();
+            //if (ismAssetFiles.Count() != 1)
+            //    throw new ArgumentException("The asset should have only one, .ism file");
+            //ismAssetFiles.First().IsPrimary = true;
+            //ismAssetFiles.First().Update();
 
-            if (ismAssetFiles.Count() != 1)
-                throw new ArgumentException("The asset should have only one, .ism file");
-
-            ismAssetFiles.First().IsPrimary = true;
-            ismAssetFiles.First().Update();
+            var ismAssetFiles = asset.AssetFiles.FirstOrDefault();
+            ismAssetFiles.IsPrimary = true;
+            ismAssetFiles.Update();
 
             model.UploadStatusMessage += " Media file uploaded successfully by id: " + asset.Id;
             model.AssetId = asset.Id;
