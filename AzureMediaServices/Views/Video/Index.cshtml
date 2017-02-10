@@ -1,4 +1,4 @@
-﻿@model IEnumerable<AzureMediaServices.Models.Video>
+﻿@model IEnumerable<AzureMediaServices.Models.VideoViewModel>
 
 @{
     ViewBag.Title = "Azure Media Services - Your Videos";
@@ -16,19 +16,26 @@
 </script>
 
 <table class="table">
-@foreach (var item in Model) {
-    <tr>
-        <td>
-            <video id="vid1" class="azuremediaplayer amp-default-skin amp-big-play-centered" controls width="440" height="250" data-setup='{"logo": { "enabled": false }, "techOrder": ["azureHtml5JS", "flashSS", "silverlightSS", "html5"], "nativeControlsForTouch": false}'>
-                <source src="@Html.DisplayFor(modelItem => item.VideoURI)" type="application/vnd.ms-sstr+xml" />
-                <p class="amp-no-js">
-                    To view this video please enable JavaScript, and consider upgrading to a web browser that supports HTML5 video
-                </p>
-            </video>
-        </td>
-        <td>
-            @Html.ActionLink("Delete", "Delete", new { id=item.Id })
-        </td>
-    </tr>
-}
+    @foreach (var item in Model)
+    {
+        <tr>
+            <td>
+                <video id="vid1" class="azuremediaplayer amp-default-skin amp-big-play-centered" controls width="440" height="250" data-setup='{"logo": { "enabled": false }, "techOrder": ["azureHtml5JS", "flashSS", "silverlightSS", "html5"], "nativeControlsForTouch": false}'>
+                    @if (item.IsEncrypted)
+                    {
+
+                        <source src="@item.LocatorUri" type="application/vnd.ms-sstr+xml" data-setup='{"protectionInfo": [{"type": "AES", "authenticationToken": "@item.Token"}]}' />
+
+                    }
+                    else
+                    {
+                        <source src="@item.LocatorUri" type="application/vnd.ms-sstr+xml" />
+                    }
+                </video>
+            </td>
+            <td>
+                @Html.ActionLink("Delete", "Delete", new { id = item.Id })
+            </td>
+        </tr>
+    }
 </table>

@@ -1,14 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-
-namespace AzureMediaServices.Models
+﻿namespace AzureMediaServices.Models
 {
     public class Video
     {
         public int Id { get; set; }
-        public string AssetId { get; set; }
-        public string VideoURI { get; set; }
+        public string EncodedAssetId { get; set; }
+        public string LocatorUri { get; set; }
+        public bool IsEncrypted { get; set; }
     }
 }

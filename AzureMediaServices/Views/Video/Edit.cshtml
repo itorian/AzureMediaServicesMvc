@@ -18,10 +18,10 @@
         @Html.HiddenFor(model => model.Id)
 
         <div class="form-group">
-            @Html.LabelFor(model => model.VideoURI, htmlAttributes: new { @class = "control-label col-md-2" })
+            @Html.LabelFor(model => model.LocatorUri, htmlAttributes: new { @class = "control-label col-md-2" })
             <div class="col-md-10">
-                @Html.EditorFor(model => model.VideoURI, new { htmlAttributes = new { @class = "form-control" } })
-                @Html.ValidationMessageFor(model => model.VideoURI, "", new { @class = "text-danger" })
+                @Html.EditorFor(model => model.LocatorUri, new { htmlAttributes = new { @class = "form-control" } })
+                @Html.ValidationMessageFor(model => model.LocatorUri, "", new { @class = "text-danger" })
             </div>
         </div>
 

@@ -244,14 +244,10 @@
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
-    <Compile Include="Migrations\201607070455566_generateInitDatabase.cs" />
-    <Compile Include="Migrations\201607070455566_generateInitDatabase.Designer.cs">
-      <DependentUpon>201607070455566_generateInitDatabase.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\AzureMediaServicesContext.cs" />
     <Compile Include="Models\CloudFile.cs" />
     <Compile Include="Models\Video.cs" />
+    <Compile Include="Models\VideoViewModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -276,11 +272,6 @@
     <None Include="Web.Release.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Migrations\201607070455566_generateInitDatabase.resx">
-      <DependentUpon>201607070455566_generateInitDatabase.cs</DependentUpon>
-    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

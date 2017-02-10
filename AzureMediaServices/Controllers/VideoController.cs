@@ -1,16 +1,20 @@
 ﻿using AzureMediaPortal.Models;
 using AzureMediaServices.Models;
 using Microsoft.WindowsAzure.MediaServices.Client;
+using Microsoft.WindowsAzure.MediaServices.Client.ContentKeyAuthorization;
+using Microsoft.WindowsAzure.MediaServices.Client.DynamicEncryption;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
 using Microsoft.WindowsAzure.Storage.RetryPolicies;
 using System;
+using System.Collections.Generic;
 using System.Configuration;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Security.Cryptography;
 using System.Text;
 using System.Web;
 using System.Web.Mvc;
@@ -26,11 +30,44 @@ namespace AzureMediaServices.Controllers
         private static readonly string storageAccountName = ConfigurationManager.AppSettings["StorageAccountName"];
         private static readonly string storageAccountKey = ConfigurationManager.AppSettings["StorageAccountKey"];
 
+        // A Uri describing the issuer of the token.  
+        // Must match the value in the token for the token to be considered valid.
+        private static readonly Uri _sampleIssuer = new Uri(ConfigurationManager.AppSettings["Issuer"]);
+
+        // The Audience or Scope of the token.  
+        // Must match the value in the token for the token to be considered valid.
+        private static readonly Uri _sampleAudience = new Uri(ConfigurationManager.AppSettings["Audience"]);
+
         private AzureMediaServicesContext db = new AzureMediaServicesContext();
+        private static readonly CloudMediaContext context = new CloudMediaContext(mediaAccountName, mediaAccountKey);
+        private static readonly bool useEncryption = true;
 
         public ActionResult Index()
         {
-            return View(db.Videos.OrderByDescending(o => o.Id).ToList());
+            var model = new List<VideoViewModel>();
+
+            var videos = db.Videos.OrderByDescending(o => o.Id).ToList();
+            foreach (var video in videos)
+            {
+                var viewModel = new VideoViewModel();
+                viewModel.Id = video.Id;
+                viewModel.EncodedAssetId = video.EncodedAssetId;
+                viewModel.IsEncrypted = video.IsEncrypted;
+                viewModel.LocatorUri = video.LocatorUri;
+
+                // If encrypted content, then get token to play
+                if (video.IsEncrypted)
+                {
+                    IAsset asset = GetAssetById(video.EncodedAssetId);
+                    IContentKey key = CreateEnvelopeTypeContentKey(asset);
+                    viewModel.Token = GenerateSecondToken(key);
+                    //viewModel.Token = "Bearer urn%3amicrosoft%3aazure%3amediaservices%3acontentkeyidentifier=65fa832a-4f75-48b0-8085-6176f94f3cc7&Audience=urn%3atestwebsite&ExpiresOn=1486811210&Issuer=http%3a%2f%2ftest.com%2f&HMACSHA256=QuAv5Gy64P2hfKAXh36EeAD87qKvYupxB9ohO6WNzbU%3d"; // TODO: Create new token from provider
+                }
+
+                model.Add(viewModel);
+            }
+
+            return View(model);
         }
 
         public ActionResult Upload()
@@ -157,8 +194,6 @@ namespace AzureMediaServices.Controllers
 
         private IAsset CreateMediaAsset(CloudFile model)
         {
-            CloudMediaContext context = new CloudMediaContext(mediaAccountName, mediaAccountKey);
-
             CloudStorageAccount storageAccount = CloudStorageAccount.Parse(storageConnectionString);
             CloudBlobClient cloudBlobClient = storageAccount.CreateCloudBlobClient();
             CloudBlobContainer mediaBlobContainer = cloudBlobClient.GetContainerReference(storageContainerReference);
@@ -166,7 +201,7 @@ namespace AzureMediaServices.Controllers
             mediaBlobContainer.CreateIfNotExists();
 
             // Create a new asset.
-            IAsset asset = context.Assets.Create("UploadedVideo-" + Guid.NewGuid(), AssetCreationOptions.None);
+            IAsset asset = context.Assets.Create("UploadedVideo-" + Guid.NewGuid().ToString().ToLower(), AssetCreationOptions.None);
             IAccessPolicy writePolicy = context.AccessPolicies.Create("writePolicy", TimeSpan.FromMinutes(120), AccessPermissions.Write);
             ILocator destinationLocator = context.Locators.CreateLocator(LocatorType.Sas, asset, writePolicy);
 
@@ -197,12 +232,6 @@ namespace AzureMediaServices.Controllers
             // Refresh the asset.
             asset = context.Assets.Where(a => a.Id == asset.Id).FirstOrDefault();
 
-            //var ismAssetFiles = asset.AssetFiles.ToList().Where(f => f.Name.EndsWith(".mp4", StringComparison.OrdinalIgnoreCase)).ToArray();
-            //if (ismAssetFiles.Count() != 1)
-            //    throw new ArgumentException("The asset should have only one, .ism file");
-            //ismAssetFiles.First().IsPrimary = true;
-            //ismAssetFiles.First().Update();
-
             var ismAssetFiles = asset.AssetFiles.FirstOrDefault();
             ismAssetFiles.IsPrimary = true;
             ismAssetFiles.Update();
@@ -214,55 +243,36 @@ namespace AzureMediaServices.Controllers
         }
 
         [HttpPost]
-        public ActionResult EncodeToAdaptiveBitrateMP4s(string assetId, string fileName)
+        public ActionResult EncodeToAdaptiveBitrateMP4s(string assetId)
         {
-            // Note: You need atleast 1 reserve streaming unit for dynamic packaging of encoded media. If you don't have that, you can't see video file playing
+            // Note: You need atleast 1 reserve streaming unit for dynamic packaging of encoded media. If you don't have that, you can't see video file playing.
             try
             {
-                CloudMediaContext context = new CloudMediaContext(mediaAccountName, mediaAccountKey);
-                IAsset inputAsset = GetAssetById(context, assetId);
+                IAsset inputAsset = GetAssetById(assetId);
 
                 // Without preset (say default preset), works very well
                 //IJob job = context.Jobs.CreateWithSingleTask(MediaProcessorNames.AzureMediaEncoder,
                 //    MediaEncoderTaskPresetStrings.H264AdaptiveBitrateMP4Set720p,
                 //    asset,
-                //    "UploadedVideo-" + Guid.NewGuid().ToString() + "-Adaptive-Bitrate-MP4",
+                //    "UploadedVideo-" + Guid.NewGuid().ToString().ToLower() + "-Adaptive-Bitrate-MP4",
                 //    AssetCreationOptions.None);
                 //job.Submit();
                 //IAsset encodedOutputAsset = job.OutputMediaAssets[0];
-                //string smoothStreamingUri = PublishAssetGetURLs(encodedOutputAsset, fileName);
                 //string assetDetails = "MediaServiceFileName:" + encodedOutputAsset.Name + ", MediaServiceContainerUri:" 
                 //    + encodedOutputAsset.Uri + ", AssetId:" + encodedOutputAsset.Id;
 
 
                 //// XML Preset
-                string name = "UploadedVideo-" + Guid.NewGuid().ToString();
-                IJob job = context.Jobs.Create(name);
-                IMediaProcessor processor = GetLatestMediaProcessorByName("Media Encoder Standard", context);
+                IJob job = context.Jobs.Create(inputAsset.Name);
+                IMediaProcessor processor = GetLatestMediaProcessorByName("Media Encoder Standard");
                 string configuration = System.IO.File.ReadAllText(HttpContext.Server.MapPath("~/MediaServicesCustomPreset.xml"));
-                ITask task = job.Tasks.AddNew(name + "- encoding task", processor, configuration, TaskOptions.None);
+                ITask task = job.Tasks.AddNew(inputAsset.Name + "- encoding task", processor, configuration, TaskOptions.None);
                 task.InputAssets.Add(inputAsset);
-                task.OutputAssets.AddNew(name + "-Adaptive-Bitrate-MP4", AssetCreationOptions.None);
+                task.OutputAssets.AddNew(inputAsset.Name + "-Adaptive-Bitrate-MP4", AssetCreationOptions.StorageEncrypted);
                 job.Submit();
                 IAsset encodedOutputAsset = job.OutputMediaAssets[0];
-                string smoothStreamingUri = PublishAssetGetURLs(encodedOutputAsset, fileName);
-                string assetDetails = "MediaServiceFileName:" + encodedOutputAsset.Name + ", MediaServiceContainerUri:" 
+                string assetDetails = "MediaServiceFileName:" + encodedOutputAsset.Name + ", MediaServiceContainerUri:"
                     + encodedOutputAsset.Uri + ", AssetId:" + encodedOutputAsset.Id;
-
-
-                //// Encryption (AES or DRM)
-                // Encode outputAsset with AES Key
-                //string token = AESEncryption.CreateAESEncryption(context, encodedAsset);
-
-
-                // Save video URI in database
-                AzureMediaServicesContext db = new AzureMediaServicesContext();
-                Video video = new Video();
-                video.Id = 0;
-                video.AssetId = encodedOutputAsset.Id;
-                video.VideoURI = GetWithoutHttp(smoothStreamingUri);
-                db.Videos.Add(video);
-                db.SaveChanges();
 
                 return Json(new
                 {
@@ -282,9 +292,248 @@ namespace AzureMediaServices.Controllers
             }
         }
 
-        private static IMediaProcessor GetLatestMediaProcessorByName(string mediaProcessorName, CloudMediaContext _context)
+        [HttpPost]
+        public ActionResult ProcessPolicyAndEncryption(string assetId)
         {
-            var processor = _context.MediaProcessors.Where(p => p.Name == mediaProcessorName).
+            IAsset asset = GetAssetById(assetId);
+            IContentKey key = CreateEnvelopeTypeContentKey(asset);
+
+            string token = string.Empty;
+
+            if (useEncryption)
+            {
+                token = GenerateToken(key);
+            }
+            else
+            {
+                // No restriction
+                AddOpenAuthorizationPolicy(key);
+            }
+
+            // Set asset delivery policy
+            CreateAssetDeliveryPolicy(asset, key);
+
+            // Generate Streaming URL
+            string locator = GetWithoutHttp(GetStreamingOriginLocator(asset)) + "/manifest";
+
+            // Update asset in database
+            AzureMediaServicesContext db = new AzureMediaServicesContext();
+            var video = new Video();
+            video.EncodedAssetId = assetId;
+            video.LocatorUri = locator;
+
+            if (useEncryption)
+            {
+                // Update encrypted=true video
+                video.IsEncrypted = true;
+                db.Videos.Add(video);
+                db.SaveChanges();
+
+                return Json(new
+                {
+                    error = false,
+                    message = "Congratulations! Video is available for clear key (AES) encrypted streaming.",
+                    encrypted = true,
+                    assetId = assetId,
+                    locator = locator,
+                    token = token
+                });
+            }
+
+            // Update encrypted=false video
+            video.IsEncrypted = false;
+            db.Videos.Add(video);
+            db.SaveChanges();
+
+            return Json(new
+            {
+                error = false,
+                message = "Congatulations! Video is available to stream without encryption.",
+                encrypted = false,
+                assetId = assetId,
+                locator = locator
+            });
+        }
+
+        // Clear Key Encryption (aka AES)
+        public string GenerateToken(IContentKey key)
+        {
+            string tokenTemplateString = AddTokenRestrictedAuthorizationPolicy(key);
+
+            TokenRestrictionTemplate tokenTemplate = TokenRestrictionTemplateSerializer.Deserialize(tokenTemplateString);
+            Guid rawkey = EncryptionUtils.GetKeyIdAsGuid(key.Id);
+
+            // The GenerateTestToken method returns the token without the word "Bearer" in front so you have to add it in front of the token string. 
+            return "Bearer " + TokenRestrictionTemplateSerializer.GenerateTestToken(tokenTemplate, null, rawkey, DateTime.UtcNow.AddDays(1));
+        }
+
+        public string GenerateSecondToken(IContentKey key)
+        {
+            string tokenTemplateString = GenerateTokenRequirements();
+            TokenRestrictionTemplate tokenTemplate = TokenRestrictionTemplateSerializer.Deserialize(tokenTemplateString);
+            Guid rawkey = EncryptionUtils.GetKeyIdAsGuid(key.Id);
+            return "Bearer " + TokenRestrictionTemplateSerializer.GenerateTestToken(tokenTemplate, null, rawkey, DateTime.UtcNow.AddDays(1));
+        }
+
+        static public void AddOpenAuthorizationPolicy(IContentKey contentKey)
+        {
+            // Create ContentKeyAuthorizationPolicy with Open restrictions and create authorization policy             
+            IContentKeyAuthorizationPolicy policy = context.ContentKeyAuthorizationPolicies.CreateAsync("Open Authorization Policy").Result;
+
+            List<ContentKeyAuthorizationPolicyRestriction> restrictions = new List<ContentKeyAuthorizationPolicyRestriction>();
+            ContentKeyAuthorizationPolicyRestriction restriction =
+                new ContentKeyAuthorizationPolicyRestriction
+                {
+                    Name = "HLS Open Authorization Policy",
+                    KeyRestrictionType = (int)ContentKeyRestrictionType.Open,
+                    Requirements = null // no requirements needed for HLS
+                };
+
+            restrictions.Add(restriction);
+
+            IContentKeyAuthorizationPolicyOption policyOption =
+                context.ContentKeyAuthorizationPolicyOptions.Create(
+                "policy",
+                ContentKeyDeliveryType.BaselineHttp,
+                restrictions,
+                "");
+
+            policy.Options.Add(policyOption);
+
+            // Add ContentKeyAutorizationPolicy to ContentKey
+            contentKey.AuthorizationPolicyId = policy.Id;
+            IContentKey updatedKey = contentKey.UpdateAsync().Result;
+        }
+
+        static public IContentKey CreateEnvelopeTypeContentKey(IAsset asset)
+        {
+            // If key already, then return it : abhimanyu
+            if (asset.ContentKeys.Count > 0)
+                return asset.ContentKeys.FirstOrDefault();
+
+            // Create envelope encryption content key
+            Guid keyId = Guid.NewGuid();
+            byte[] contentKey = GetRandomBuffer(16);
+
+            IContentKey key = context.ContentKeys.Create(
+                                    keyId,
+                                    contentKey,
+                                    "ContentKey",
+                                    ContentKeyType.EnvelopeEncryption);
+
+            // Associate the key with the asset.
+            asset.ContentKeys.Add(key);
+
+            return key;
+        }
+
+        static public string GetStreamingOriginLocator(IAsset asset)
+        {
+            // Get a reference to the streaming manifest file from the collection of files in the asset. 
+            var assetFile = asset.AssetFiles.Where(f => f.Name.ToLower().EndsWith(".ism")).FirstOrDefault();
+
+            // A locator expiry can be set to maximum 100 years, using 99 years below.
+            TimeSpan daysForWhichStreamingUrlIsActive = DateTime.Now.AddYears(99) - DateTime.Now;
+            IAccessPolicy policy = context.AccessPolicies.Create("Streaming policy", daysForWhichStreamingUrlIsActive, AccessPermissions.Read);
+
+            // Create a locator to the streaming content on an origin.
+            ILocator originLocator = context.Locators.CreateLocator(LocatorType.OnDemandOrigin, asset, policy, DateTime.UtcNow.AddMinutes(-5));
+
+            // Create a URL to the manifest file. 
+            return originLocator.Path + assetFile.Name;
+        }
+
+        static public void CreateAssetDeliveryPolicy(IAsset asset, IContentKey key)
+        {
+            Uri keyAcquisitionUri = key.GetKeyDeliveryUrl(ContentKeyDeliveryType.BaselineHttp);
+
+            string envelopeEncryptionIV = Convert.ToBase64String(GetRandomBuffer(16));
+
+            // The following policy configuration specifies: key url that will have KID=<Guid> appended to the envelope and
+            // the Initialization Vector (IV) to use for the envelope encryption.
+            Dictionary<AssetDeliveryPolicyConfigurationKey, string> assetDeliveryPolicyConfiguration =
+                new Dictionary<AssetDeliveryPolicyConfigurationKey, string>
+            {
+                        {AssetDeliveryPolicyConfigurationKey.EnvelopeKeyAcquisitionUrl, keyAcquisitionUri.ToString()}
+            };
+
+            IAssetDeliveryPolicy assetDeliveryPolicy =
+                context.AssetDeliveryPolicies.Create(
+                            "AssetDeliveryPolicy",
+                            AssetDeliveryPolicyType.DynamicEnvelopeEncryption,
+                            AssetDeliveryProtocol.SmoothStreaming | AssetDeliveryProtocol.HLS | AssetDeliveryProtocol.Dash,
+                            assetDeliveryPolicyConfiguration);
+
+            // Add AssetDelivery Policy to the asset
+            asset.DeliveryPolicies.Add(assetDeliveryPolicy);
+        }
+
+        public static string AddTokenRestrictedAuthorizationPolicy(IContentKey contentKey)
+        {
+            string tokenTemplateString = GenerateTokenRequirements();
+
+            IContentKeyAuthorizationPolicy policy = context.
+                                    ContentKeyAuthorizationPolicies.
+                                    CreateAsync("HLS token restricted authorization policy").Result;
+
+            List<ContentKeyAuthorizationPolicyRestriction> restrictions = new List<ContentKeyAuthorizationPolicyRestriction>();
+
+            ContentKeyAuthorizationPolicyRestriction restriction =
+                    new ContentKeyAuthorizationPolicyRestriction
+                    {
+                        Name = "Token Authorization Policy",
+                        KeyRestrictionType = (int)ContentKeyRestrictionType.TokenRestricted,
+                        Requirements = tokenTemplateString
+                    };
+
+            restrictions.Add(restriction);
+
+            //You could have multiple options 
+            IContentKeyAuthorizationPolicyOption policyOption =
+                context.ContentKeyAuthorizationPolicyOptions.Create(
+                    "Token option for HLS",
+                    ContentKeyDeliveryType.BaselineHttp,
+                    restrictions,
+                    null  // no key delivery data is needed for HLS
+                    );
+
+            policy.Options.Add(policyOption);
+
+            // Add ContentKeyAutorizationPolicy to ContentKey
+            contentKey.AuthorizationPolicyId = policy.Id;
+            IContentKey updatedKey = contentKey.UpdateAsync().Result;
+
+            return tokenTemplateString;
+        }
+
+        static private string GenerateTokenRequirements()
+        {
+            TokenRestrictionTemplate template = new TokenRestrictionTemplate(TokenType.SWT);
+
+            template.PrimaryVerificationKey = new SymmetricVerificationKey();
+            template.AlternateVerificationKeys.Add(new SymmetricVerificationKey());
+            template.Audience = _sampleAudience.ToString();
+            template.Issuer = _sampleIssuer.ToString();
+
+            template.RequiredClaims.Add(TokenClaim.ContentKeyIdentifierClaim);
+
+            return TokenRestrictionTemplateSerializer.Serialize(template);
+        }
+
+        static private byte[] GetRandomBuffer(int size)
+        {
+            byte[] randomBytes = new byte[size];
+            using (RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider())
+            {
+                rng.GetBytes(randomBytes);
+            }
+
+            return randomBytes;
+        }
+
+        private static IMediaProcessor GetLatestMediaProcessorByName(string mediaProcessorName)
+        {
+            var processor = context.MediaProcessors.Where(p => p.Name == mediaProcessorName).
             ToList().OrderBy(p => new Version(p.Version)).LastOrDefault();
 
             if (processor == null)
@@ -300,34 +549,30 @@ namespace AzureMediaServices.Controllers
                 smoothStreamingUri = smoothStreamingUri.Substring("http:".Length);
             }
 
+            if (smoothStreamingUri.StartsWith("https:"))
+            {
+                smoothStreamingUri = smoothStreamingUri.Substring("https:".Length);
+            }
+
             return smoothStreamingUri;
         }
 
         // Create locator and get urls
-        static public string PublishAssetGetURLs(IAsset asset, string fileName)
+        static public string PublishAssetGetURLs(IAsset asset)
         {
             // A locator expiry can be set to maximum 100 years, using 99 years below.
-            DateTime now = DateTime.Now;
-            TimeSpan daysForWhichStreamingUrlIsActive = now.AddYears(99) - now;
-            CloudMediaContext context = new CloudMediaContext(mediaAccountName, mediaAccountKey);
+            TimeSpan daysForWhichStreamingUrlIsActive = DateTime.Now.AddYears(99) - DateTime.Now;
             IAccessPolicy videoWatchPolicy = context.AccessPolicies.Create("videoWatchPolicy", daysForWhichStreamingUrlIsActive, AccessPermissions.Read);
             ILocator destinationLocator = context.Locators.CreateLocator(LocatorType.OnDemandOrigin, asset, videoWatchPolicy);
-
-            // Get urls
-            //Uri smoothStreamingUri = asset.GetSmoothStreamingUri();
-            //Uri hlsUri = asset.GetHlsUri();
-            //Uri mpegDashUri = asset.GetMpegDashUri();
-            //return smoothStreamingUri.ToString();
-
 
             // Get the asset container URI
             Uri uploadUri = new Uri(destinationLocator.Path);
 
             // Note: You need atleast 1 reserve streaming unit for dynamic packaging of encoded media. If you don't have that, you can't see video file playing
-            return uploadUri.ToString() + fileName + ".ism/Manifest";
+            return uploadUri.ToString() + asset.Name + ".ism/manifest";
         }
 
-        internal static IAsset GetAssetById(CloudMediaContext context, string assetId)
+        internal static IAsset GetAssetById(string assetId)
         {
             IAsset theAsset = (from a in context.Assets
                                where a.Id == assetId
@@ -367,7 +612,6 @@ namespace AzureMediaServices.Controllers
 
         static IJob GetJob(string jobId)
         {
-            CloudMediaContext context = new CloudMediaContext(mediaAccountName, mediaAccountKey);
             var jobInstance =
                 from j in context.Jobs
                 where j.Id == jobId
@@ -406,17 +650,14 @@ namespace AzureMediaServices.Controllers
 
         private void DeleteMediaService(Video video)
         {
-            // Delete from Media Services
-            CloudMediaContext context = new CloudMediaContext(mediaAccountName, mediaAccountKey);
-
-            string assetId = video.AssetId;
-            IAsset asset = GetAsset(context, assetId);
+            string assetId = video.EncodedAssetId;
+            IAsset asset = GetAssetFromDatabase(assetId);
 
             // Now delete the asset
             asset.Delete();
         }
 
-        private IAsset GetAsset(CloudMediaContext context, string assetId)
+        private IAsset GetAssetFromDatabase(string assetId)
         {
             return context.Assets.Where(a => a.Id == assetId).FirstOrDefault();
         }

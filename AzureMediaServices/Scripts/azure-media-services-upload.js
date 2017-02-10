@@ -112,15 +112,14 @@ var sendFile = function (file, chunkSize) {
 }
 
 var encodeFile = function (assetId) {
-    var fileName = (($('#selectFile').val()).split('\\').pop()).split(".")[0];
     $.ajax({
         type: "POST",
         async: false,
-        url: "/Video/EncodeToAdaptiveBitrateMP4s?assetId=" + assetId + "&fileName=" + fileName,
+        url: "/Video/EncodeToAdaptiveBitrateMP4s?assetId=" + assetId,
     }).done(function (state) {
         if (!state.error) {
             displayStatusMessage(state.message);
-            getJobState(state.jobId);
+            getJobState(state.jobId, state.assetId);
         }
     }).fail(function (state) {
         if (state.error) {
@@ -130,27 +129,50 @@ var encodeFile = function (assetId) {
 }
 
 // Smells buggy code, needs improvement
-var getJobState = function (jobId) {
+var getJobState = function (jobId, assetId) {
     var url = "/Video/GetEncodingJobStatus";
     $.get(url, { jobId: jobId })
     .done(function (data) {
         displayStatusMessage("Current encoding job state is : " + data);
         if (data != "Error") {
             if (data != "Finished") {
-                //setInterval(function () { getJobState(jobId); }, 5000);
-                setTimeout(function () { getJobState(jobId); }, 5000);
+                setTimeout(function () { getJobState(jobId, assetId); }, 5000);
             }
             if (data == "Finished") {
-                displayStatusMessage("Video is available for streaming. Enjoy!");
+                applyEncryption(assetId);
             }
         }
         else {
             displayStatusMessage("Job status check error");
         }
-        
+
     })
     .fail(function () {
         displayStatusMessage("Job status check error");
+    });
+}
+
+var applyEncryption = function (assetId) {
+    $.ajax({
+        type: "POST",
+        async: false,
+        url: "/Video/ProcessPolicyAndEncryption?assetId=" + assetId,
+    }).done(function (state) {
+        if (!state.error) {
+            displayStatusMessage(state.message);
+            if (state.encrypted) {
+                console.log(state.assetId);
+                console.log(state.locator);
+                console.log(state.token);
+            } else {
+                console.log(state.assetId);
+                console.log(state.locator);
+            }
+        }
+    }).fail(function (state) {
+        if (state.error) {
+            displayStatusMessage(state.message);
+        }
     });
 }
 
