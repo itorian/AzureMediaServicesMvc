@@ -208,8 +208,7 @@ namespace AzureMediaServices.Controllers
                 string configuration = System.IO.File.ReadAllText(HttpContext.Server.MapPath("~/MediaServicesCustomPreset.xml"));
                 ITask task = job.Tasks.AddNew(inputAsset.Name + "- encoding task", processor, configuration, TaskOptions.None);
                 task.InputAssets.Add(inputAsset);
-                //task.OutputAssets.AddNew(inputAsset.Name + "-Adaptive-Bitrate-MP4", AssetCreationOptions.StorageEncrypted);
-                task.OutputAssets.AddNew(inputAsset.Name + "-Adaptive-Bitrate-MP4", AssetCreationOptions.None);
+                task.OutputAssets.AddNew(inputAsset.Name + "-Adaptive-Bitrate-MP4", AssetCreationOptions.StorageEncrypted);
                 job.Submit();
                 IAsset encodedOutputAsset = job.OutputMediaAssets[0];
                 string assetDetails = "MediaServiceFileName:" + encodedOutputAsset.Name + ", MediaServiceContainerUri:"
