@@ -244,10 +244,8 @@
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
-    <Compile Include="Models\AzureMediaService.cs" />
     <Compile Include="Models\AzureMediaServicesContext.cs" />
     <Compile Include="Models\CloudFile.cs" />
-    <Compile Include="Models\Extension.cs" />
     <Compile Include="Models\Video.cs" />
     <Compile Include="Models\VideoViewModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
