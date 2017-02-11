@@ -244,7 +244,7 @@ namespace AzureMediaServices.Controllers
             if (useEncryption)
             {
                 // Clear key encryption (aka AES encryption)
-                token = AzureMediaService.GenerateToken(key);
+                token = AzureMediaService.GenerateTestToken(key);
             }
             else
             {
