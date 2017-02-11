@@ -566,7 +566,8 @@ namespace AzureMediaServices.Controllers
         }
 
         // Get encoding job status
-        public string GetEncodingJobStatus(string jobId)
+        [HttpGet]
+        public JsonResult GetEncodingJobStatus(string jobId)
         {
             StringBuilder builder = new StringBuilder();
             IJob job = GetJob(jobId);
@@ -589,10 +590,11 @@ namespace AzureMediaServices.Controllers
                     }
                 }
                 Debug.WriteLine(builder);
-                return "Error";
+
+                return Json(new { error = true, message = "Encoding error from media service" }, JsonRequestBehavior.AllowGet);
             }
 
-            return job.State.ToString();
+            return Json(new { error = false, state = job.State.ToString(), progress = job.GetOverallProgress().ToString() }, JsonRequestBehavior.AllowGet);
         }
 
         static IJob GetJob(string jobId)

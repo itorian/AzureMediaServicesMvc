@@ -133,22 +133,22 @@ var getJobState = function (jobId, assetId) {
     var url = "/Video/GetEncodingJobStatus";
     $.get(url, { jobId: jobId })
     .done(function (data) {
-        displayStatusMessage("Current encoding job state is : " + data);
-        if (data != "Error") {
-            if (data != "Finished") {
+        if (!data.error) {
+            if (data.state != "Finished") {
+                displayStatusMessage("Job State : " + data.state);
                 setTimeout(function () { getJobState(jobId, assetId); }, 5000);
             }
-            if (data == "Finished") {
+            if (data.state == "Finished") {
                 applyEncryption(assetId);
             }
         }
         else {
-            displayStatusMessage("Job status check error");
+            displayStatusMessage(data.message);
         }
 
     })
     .fail(function () {
-        displayStatusMessage("Job status check error");
+        displayStatusMessage("Encoding job status check error");
     });
 }
 
