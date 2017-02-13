@@ -17,8 +17,10 @@ textarea {
 }
 
 a.logo {
-    background: url(/Content/logo.png) no-repeat top left;
     display: block;
     background-size: 50px 50px;
-    text-indent: 50px;
+}
+
+.navbar-nav > li > a {
+    padding-top: 18px !important;
 }

@@ -9,6 +9,7 @@ using Microsoft.WindowsAzure.Storage.RetryPolicies;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Data.Entity;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
@@ -61,6 +62,7 @@ namespace AzureMediaServices.Controllers
                     IAsset asset = GetAssetById(video.EncodedAssetId);
                     IContentKey key = CreateEnvelopeTypeContentKey(asset);
                     viewModel.Token = GenerateToken(key);
+
                     //viewModel.Token = "Bearer urn%3amicrosoft%3aazure%3amediaservices%3acontentkeyidentifier=65fa832a-4f75-48b0-8085-6176f94f3cc7&Audience=urn%3atestwebsite&ExpiresOn=1486811210&Issuer=http%3a%2f%2ftest.com%2f&HMACSHA256=QuAv5Gy64P2hfKAXh36EeAD87qKvYupxB9ohO6WNzbU%3d"; // TODO: Create new token from provider
                 }
 
@@ -258,8 +260,6 @@ namespace AzureMediaServices.Controllers
                 //    AssetCreationOptions.None);
                 //job.Submit();
                 //IAsset encodedOutputAsset = job.OutputMediaAssets[0];
-                //string assetDetails = "MediaServiceFileName:" + encodedOutputAsset.Name + ", MediaServiceContainerUri:" 
-                //    + encodedOutputAsset.Uri + ", AssetId:" + encodedOutputAsset.Id;
 
 
                 //// XML Preset
@@ -270,15 +270,23 @@ namespace AzureMediaServices.Controllers
                 task.InputAssets.Add(inputAsset);
                 task.OutputAssets.AddNew(inputAsset.Name + "-Adaptive-Bitrate-MP4", AssetCreationOptions.StorageEncrypted);
                 job.Submit();
-                IAsset encodedOutputAsset = job.OutputMediaAssets[0];
-                string assetDetails = "MediaServiceFileName:" + encodedOutputAsset.Name + ", MediaServiceContainerUri:"
-                    + encodedOutputAsset.Uri + ", AssetId:" + encodedOutputAsset.Id;
+                IAsset encodedAsset = job.OutputMediaAssets[0];
+
+                // add jobid and output asset id in database
+                AzureMediaServicesContext db = new AzureMediaServicesContext();
+                var video = new Video();
+                video.RowAssetId = assetId;
+                video.EncodingJobId = job.Id;
+                video.EncodedAssetId = encodedAsset.Id;
+                video.IsEncrypted = false;
+                db.Videos.Add(video);
+                db.SaveChanges();
 
                 return Json(new
                 {
                     error = false,
-                    message = "Encoding scheduled with Job Id " + job.Id + ". Encoded output Asset Id: " + encodedOutputAsset.Id,
-                    assetId = encodedOutputAsset.Id,
+                    message = "Encoding scheduled with Job Id " + job.Id + ". Encoded output Asset Id: " + encodedAsset.Id,
+                    assetId = encodedAsset.Id,
                     jobId = job.Id
                 });
             }
@@ -316,17 +324,16 @@ namespace AzureMediaServices.Controllers
             // Generate Streaming URL
             string locator = GetWithoutHttp(GetStreamingOriginLocator(asset)) + "/manifest";
 
-            // Update asset in database
+            // add asset in database
             AzureMediaServicesContext db = new AzureMediaServicesContext();
-            var video = new Video();
-            video.EncodedAssetId = assetId;
+            var video = db.Videos.Where(i => i.EncodedAssetId == assetId).FirstOrDefault();
             video.LocatorUri = locator;
 
             if (useEncryption)
             {
-                // Update encrypted=true video
+                // add encrypted=true video
                 video.IsEncrypted = true;
-                db.Videos.Add(video);
+                db.Entry(video).State = EntityState.Modified;
                 db.SaveChanges();
 
                 return Json(new
@@ -340,16 +347,16 @@ namespace AzureMediaServices.Controllers
                 });
             }
 
-            // Update encrypted=false video
+            // add encrypted=false video
             video.IsEncrypted = false;
-            db.Videos.Add(video);
+            db.Entry(video).State = EntityState.Modified;
             db.SaveChanges();
 
             return Json(new
             {
                 error = false,
                 message = "Congatulations! Video is available to stream without encryption.",
-                encrypted = false,
+                encrypted = video.IsEncrypted,
                 assetId = assetId,
                 locator = locator
             });

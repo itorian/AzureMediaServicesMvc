@@ -20,12 +20,15 @@
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </button>
-                @Html.ActionLink("Azure Media Services", "Index", "Home", new { area = "" }, new { @class = "navbar-brand logo" })
+                <a href="#" class="navbar-brand logo">
+                    <img width="27" height="30" title="" alt="" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACUAAAApCAMAAACFghBKAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAB6VBMVEUAAAD///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////8AAACMv10hAAAAoXRSTlMASdBSKqXCLw5//aEhV+P0ew00s+lbEpLJTl3n+J9lPuiiOcoaC3qOEBeWwwlz8cYBi0ekyAITiczfRpS888+nWQO1M0LX4KN09V/84rKgLDxca6oy0W32ChHcsCfUQNNefWqrdpivMNthuh2Vgcs/ImOHhmbynLYGbtg7cM5xD7/vFM3hxzcpdZogvhs4VE8VSBnaVnKIqbftI/7SaJPrZNytRAYAAAABYktHRACIBR1IAAAACXBIWXMAAAsSAAALEgHS3X78AAACTklEQVQ4y32U918TQRDFhyhigICSCAoGYqIISAjqKSogwWDBgiAWiA0VBEsQa7BgiRB7r4Bt/1NvZvYue7lL3g/5vHn7vc3e7O4BZKnAJVxLIL+WFgrUsqI8zHJ3sZAqKc0FecpERuUrVjoxFV5hlW+VjamsEnatXmOFqmsoXuuvrUPV+gPMrVNeIxjizL3ejDbUl3O2sYGDxiauXUHL9KWbOA7U60VzuIWrSGv2WjfL5YW2wFZptW3G4HYTa5NjO0DOu1NCu9o7Ond3Rbu5koN7QHYpRmnPXvn0vjBvBldeSTVRGFZ6tZ+SAyrV24zRQd0dMjE/YYfRHmGqD4OjtND+iIENYHgM3SBTxzE4QU0DOCmpU0N6OIwuDi799zRCZ2jorO7OnWdsBOML6OCi99IIdcFtUgCj5At5i8e8Y5lOX1YoGNd0P+FwvgIqBXClU5Q5UFet1DWf8DlQ1y1UQveTmcGe0RtTZG4qVHAS/S3yUwW3+0E/gMV3sBq6a1IJ7gQ9fU+/VhoksZ7G+j66BwBFGkO0IQ/RJbn3j2juGbyv8Ni4Qk8we6rs9jOiUs+FmJ0z7mMaoxeWk/OSX+WVeSJCrynQJPWG07eMvevD5vZ2eEB5b/1Ey7MaHzauWN37Dx+l/yQnboPP8l/ilbY+S+jLVyzSg1RMjGdB3+RE07IemKH6e6PCpH9Q9jOmZIl5jFraowutqIVoFzE11dbpU/KbsziLWuSiyr5W2/crUgFO8vxSGN9vyCX3vAGVNEBupf4Qk/cbjYolxd9/2eF/zeOQ+fvcwlgAAAAASUVORK5CYII=">
+                    Azure Media Services
+                </a>
             </div>
             <div class="navbar-collapse collapse">
                 <ul class="nav navbar-nav">
-                    <li>@Html.ActionLink("Upload", "Upload", "Video")</li>
-                    <li>@Html.ActionLink("Play", "Index", "Video")</li>
+                    <li>@Html.ActionLink("Upload Video", "Upload", "Video")</li>
+                    <li>@Html.ActionLink("Play Video", "Index", "Video")</li>
                 </ul>
             </div>
         </div>
