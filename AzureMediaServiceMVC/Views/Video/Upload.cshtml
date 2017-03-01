@@ -1,0 +1,31 @@
+﻿@{
+    ViewBag.Title = "Upload Video";
+}
+
+<h2>@ViewBag.Title</h2>
+
+@using (Html.BeginForm())
+{
+    <div class="form-group">
+        <label for="selectFile">Select Video File</label>
+        <input type="file" id="selectFile" accept=".mp4,.avi" />
+    </div>
+
+    <div class="form-group">
+        <input type="button" id="fileUpload" name="fileUpload" value="Upload" class="btn" />
+    </div>
+
+    <div class="form-group">
+        <div id="progressBar" style="background-color: grey"></div>
+    </div>
+
+    <div class="form-group">
+        <label id="statusMessage" style="color:red;font-size: 50px;"></label>
+    </div>
+}
+
+@section scripts{
+    <link href="~/Content/themes/base/jquery-ui.css" rel="stylesheet" />
+    <script src="~/Scripts/jquery-ui-1.12.1.min.js"></script>
+    <script src="~/Scripts/azure-media-services-upload.js"></script>
+}
