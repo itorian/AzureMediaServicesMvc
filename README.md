@@ -1,3 +1,6 @@
+# Note: I'm migrating this project to AES, so first time playback just after uploading will work but next time onwards playback may break. Please feel free to send pull request.
+
+
 # Azure Media Services Upload and Play Videos in MVC
 
 In this project you will learn how to upload video on Azure Media Services in your defined storage account. This is a complete end to end MVC application with evey necessary feature.
