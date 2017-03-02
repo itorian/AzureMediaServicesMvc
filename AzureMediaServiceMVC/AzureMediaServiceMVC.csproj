@@ -234,6 +234,7 @@
     <Compile Include="Models\AspNetIdentity\AccountViewModels.cs" />
     <Compile Include="Models\AspNetIdentity\IdentityModels.cs" />
     <Compile Include="Models\AspNetIdentity\ManageViewModels.cs" />
+    <Compile Include="Models\Azure\AzureMediaAsset.cs" />
     <Compile Include="Models\Azure\AzureMediaServicesContext.cs" />
     <Compile Include="Models\Azure\CloudFile.cs" />
     <Compile Include="Models\Azure\TokenResult.cs" />
@@ -315,7 +316,9 @@
     <Content Include="Scripts\respond.js" />
     <Content Include="Scripts\respond.min.js" />
     <Content Include="Scripts\_references.js" />
-    <Content Include="Web.config" />
+    <Content Include="Web.config">
+      <SubType>Designer</SubType>
+    </Content>
     <Content Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </Content>

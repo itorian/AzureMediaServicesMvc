@@ -6,7 +6,6 @@ using System.Data;
 using System.Linq;
 using System.Text;
 using System.Web.Mvc;
-using System.Data.Entity;
 using System.Diagnostics;
 using System.Globalization;
 using System.Configuration;
@@ -19,6 +18,7 @@ using Microsoft.WindowsAzure.MediaServices.Client;
 using Microsoft.WindowsAzure.Storage.RetryPolicies;
 using Microsoft.WindowsAzure.MediaServices.Client.DynamicEncryption;
 using Microsoft.WindowsAzure.MediaServices.Client.ContentKeyAuthorization;
+using AzureMediaServiceMVC.Models.Azure;
 
 namespace AzureMediaServiceMVC.Controllers
 {
@@ -56,12 +56,13 @@ namespace AzureMediaServiceMVC.Controllers
                 viewModel.EncodedAssetId = video.EncodedAssetId;
                 viewModel.IsEncrypted = video.IsEncrypted;
                 viewModel.LocatorUri = video.LocatorUri;
+                viewModel.Status = AzureMediaAsset.GetEncodingJobStatus(video.EncodingJobId);
 
                 // If encrypted content, then get token to play
                 if (video.IsEncrypted)
                 {
                     IAsset asset = GetAssetById(video.EncodedAssetId);
-                    viewModel.Token = GetTestToken(asset);
+                    viewModel.Token = AzureMediaAsset.GetTestToken(asset.Id, asset);
                 }
 
                 model.Add(viewModel);
@@ -81,6 +82,7 @@ namespace AzureMediaServiceMVC.Controllers
             var container = CloudStorageAccount.Parse(storageConnectionString).CreateCloudBlobClient().GetContainerReference(storageContainerReference);
 
             container.CreateIfNotExists();
+
             var fileToUpload = new CloudFile()
             {
                 BlockCount = blocksCount,
@@ -91,7 +93,9 @@ namespace AzureMediaServiceMVC.Controllers
                 IsUploadCompleted = false,
                 UploadStatusMessage = string.Empty
             };
+
             Session.Add("CurrentFile", fileToUpload);
+
             return Json(true);
         }
 
@@ -150,7 +154,6 @@ namespace AzureMediaServiceMVC.Controllers
                 }
                 catch (StorageException e)
                 {
-                    Session.Remove("CurrentFile");
                     model.IsUploadCompleted = true;
                     model.UploadStatusMessage = "Failed to Upload file. Exception - " + e.Message;
                     return Json(new { error = true, isLastBlock = false, message = model.UploadStatusMessage });
@@ -178,10 +181,6 @@ namespace AzureMediaServiceMVC.Controllers
             {
                 model.UploadStatusMessage = "Failed to upload file. Exception - " + e.Message;
                 errorInOperation = true;
-            }
-            finally
-            {
-                Session.Remove("CurrentFile");
             }
             return Json(new
             {
@@ -246,62 +245,80 @@ namespace AzureMediaServiceMVC.Controllers
         public ActionResult EncodeToAdaptiveBitrateMP4s(string assetId)
         {
             // Note: You need atleast 1 reserve streaming unit for dynamic packaging of encoded media. If you don't have that, you can't see video file playing.
-            try
+
+            IAsset inputAsset = GetAssetById(assetId);
+            string token = string.Empty;
+            string uploadFileOriginalName = string.Empty;
+
+            ////// Without preset (say default preset), works very well
+            //IJob job = context.Jobs.CreateWithSingleTask(MediaProcessorNames.AzureMediaEncoder,
+            //    MediaEncoderTaskPresetStrings.H264AdaptiveBitrateMP4Set720p,
+            //    inputAsset,
+            //    "UploadedVideo-" + Guid.NewGuid().ToString().ToLower() + "-Adaptive-Bitrate-MP4",
+            //    AssetCreationOptions.None);
+            //job.Submit();
+            //IAsset encodedOutputAsset = job.OutputMediaAssets[0];
+
+
+            //// XML Preset
+            IJob job = context.Jobs.Create(inputAsset.Name);
+            IMediaProcessor processor = GetLatestMediaProcessorByName("Media Encoder Standard");
+            string configuration = System.IO.File.ReadAllText(HttpContext.Server.MapPath("~/MediaServicesCustomPreset.xml"));
+            ITask task = job.Tasks.AddNew(inputAsset.Name + "- encoding task", processor, configuration, TaskOptions.None);
+            task.InputAssets.Add(inputAsset);
+            task.OutputAssets.AddNew(inputAsset.Name + "-Adaptive-Bitrate-MP4", AssetCreationOptions.None);
+            job.Submit();
+            IAsset encodedAsset = job.OutputMediaAssets[0];
+
+            // process policy & encryption
+            ProcessPolicyAndEncryption(encodedAsset);
+
+            // Get file name
+            string fileSession = "CurrentFile";
+            if (Session[fileSession] != null)
             {
-                IAsset inputAsset = GetAssetById(assetId);
-
-                // Without preset (say default preset), works very well
-                //IJob job = context.Jobs.CreateWithSingleTask(MediaProcessorNames.AzureMediaEncoder,
-                //    MediaEncoderTaskPresetStrings.H264AdaptiveBitrateMP4Set720p,
-                //    asset,
-                //    "UploadedVideo-" + Guid.NewGuid().ToString().ToLower() + "-Adaptive-Bitrate-MP4",
-                //    AssetCreationOptions.None);
-                //job.Submit();
-                //IAsset encodedOutputAsset = job.OutputMediaAssets[0];
-
-
-                //// XML Preset
-                IJob job = context.Jobs.Create(inputAsset.Name);
-                IMediaProcessor processor = GetLatestMediaProcessorByName("Media Encoder Standard");
-                string configuration = System.IO.File.ReadAllText(HttpContext.Server.MapPath("~/MediaServicesCustomPreset.xml"));
-                ITask task = job.Tasks.AddNew(inputAsset.Name + "- encoding task", processor, configuration, TaskOptions.None);
-                task.InputAssets.Add(inputAsset);
-                task.OutputAssets.AddNew(inputAsset.Name + "-Adaptive-Bitrate-MP4", AssetCreationOptions.StorageEncrypted);
-                job.Submit();
-                IAsset encodedAsset = job.OutputMediaAssets[0];
-
-                // add jobid and output asset id in database
-                AzureMediaServicesContext db = new AzureMediaServicesContext();
-                var video = new Video();
-                video.RowAssetId = assetId;
-                video.EncodingJobId = job.Id;
-                video.EncodedAssetId = encodedAsset.Id;
-                video.IsEncrypted = false;
-                db.Videos.Add(video);
-                db.SaveChanges();
-
-                return Json(new
-                {
-                    error = false,
-                    message = "Encoding scheduled with Job Id " + job.Id + ". Encoded output Asset Id: " + encodedAsset.Id,
-                    assetId = encodedAsset.Id,
-                    jobId = job.Id
-                });
+                CloudFile model = (CloudFile)Session[fileSession];
+                uploadFileOriginalName = model.FileName;
             }
-            catch (Exception)
+
+            // Generate Streaming URL
+            string smoothStreamingUri = GetStreamingOriginLocator(encodedAsset, uploadFileOriginalName);
+
+            // add jobid and output asset id in database
+            AzureMediaServicesContext db = new AzureMediaServicesContext();
+            var video = new Video();
+            video.RowAssetId = assetId;
+            video.EncodingJobId = job.Id;
+            video.EncodedAssetId = encodedAsset.Id;
+            video.LocatorUri = smoothStreamingUri;
+            video.IsEncrypted = useEncryption;
+            db.Videos.Add(video);
+            db.SaveChanges();
+
+            if (useEncryption)
             {
-                return Json(new
-                {
-                    error = true,
-                    message = "Error occured in encoding."
-                });
+                token = AzureMediaAsset.GetTestToken(encodedAsset.Id, encodedAsset);
             }
+
+            // Remove session
+            Session.Remove("CurrentFile");
+
+            // return success response
+            return Json(new
+            {
+                error = false,
+                message = "Congratulations! Video is uploaded and pipelined for encoding, check console log for after encoding playback details.",
+                assetId = assetId,
+                jobId = job.Id,
+                locator = smoothStreamingUri,
+                encrypted = useEncryption,
+                token = token
+            });
+
         }
 
-        [HttpPost]
-        public ActionResult ProcessPolicyAndEncryption(string assetId)
+        public void ProcessPolicyAndEncryption(IAsset asset)
         {
-            IAsset asset = GetAssetById(assetId);
             IContentKey key = CreateEnvelopeTypeContentKey(asset);
 
             if (useEncryption)
@@ -317,80 +334,6 @@ namespace AzureMediaServiceMVC.Controllers
 
             // Set asset delivery policy
             CreateAssetDeliveryPolicy(asset, key);
-
-            // Generate Streaming URL
-            string locator = GetWithoutHttp(GetStreamingOriginLocator(asset)) + "/manifest";
-
-            // add asset in database
-            AzureMediaServicesContext db = new AzureMediaServicesContext();
-            var video = db.Videos.Where(i => i.EncodedAssetId == assetId).FirstOrDefault();
-            video.LocatorUri = locator;
-
-            if (useEncryption)
-            {
-                // add encrypted=true video
-                video.IsEncrypted = true;
-                db.Entry(video).State = EntityState.Modified;
-                db.SaveChanges();
-
-                return Json(new
-                {
-                    error = false,
-                    message = "Congratulations! Video is available for clear key (AES) encrypted streaming.",
-                    encrypted = true,
-                    assetId = assetId,
-                    locator = locator,
-                    token = GetTestToken(asset)
-                });
-            }
-
-            // add encrypted=false video
-            video.IsEncrypted = false;
-            db.Entry(video).State = EntityState.Modified;
-            db.SaveChanges();
-
-            return Json(new
-            {
-                error = false,
-                message = "Congatulations! Video is available to stream without encryption.",
-                encrypted = video.IsEncrypted,
-                assetId = assetId,
-                locator = locator
-            });
-        }
-
-        public string GetTestToken(IAsset asset)
-        {
-            IContentKey key = asset.ContentKeys.FirstOrDefault();
-
-            if (key != null && key.AuthorizationPolicyId != null)
-            {
-                IContentKeyAuthorizationPolicy policy = context.ContentKeyAuthorizationPolicies.Where(p => p.Id == key.AuthorizationPolicyId).FirstOrDefault();
-
-                if (policy != null)
-                {
-                    IContentKeyAuthorizationPolicyOption option = null;
-                    option = policy.Options.Where(o => (ContentKeyRestrictionType)o.Restrictions.FirstOrDefault().KeyRestrictionType == ContentKeyRestrictionType.TokenRestricted).FirstOrDefault();
-
-                    if (option != null)
-                    {
-                        string tokenTemplateString = option.Restrictions.FirstOrDefault().Requirements;
-
-                        if (!string.IsNullOrEmpty(tokenTemplateString))
-                        {
-                            Guid rawkey = EncryptionUtils.GetKeyIdAsGuid(key.Id);
-                            TokenRestrictionTemplate tokenTemplate = TokenRestrictionTemplateSerializer.Deserialize(tokenTemplateString);
-
-                            if (tokenTemplate.TokenType == TokenType.SWT) //SWT
-                            {
-                                return "Bearer " + TokenRestrictionTemplateSerializer.GenerateTestToken(tokenTemplate, null, rawkey, DateTime.UtcNow.AddDays(1));
-                            }
-                        }
-                    }
-                }
-            }
-
-            return null;
         }
 
         static public void AddOpenAuthorizationPolicy(IContentKey contentKey)
@@ -441,10 +384,10 @@ namespace AzureMediaServiceMVC.Controllers
             return key;
         }
 
-        static public string GetStreamingOriginLocator(IAsset asset)
+        static public string GetStreamingOriginLocator(IAsset asset, string filename)
         {
             // Get a reference to the streaming manifest file from the collection of files in the asset. 
-            var assetFile = asset.AssetFiles.Where(f => f.Name.ToLower().EndsWith(".ism")).FirstOrDefault();
+            //var assetFile = asset.AssetFiles.Where(f => f.Name.ToLower().EndsWith(".ism")).FirstOrDefault();
 
             // A locator expiry can be set to maximum 100 years, using 99 years below.
             TimeSpan daysForWhichStreamingUrlIsActive = DateTime.Now.AddYears(99) - DateTime.Now;
@@ -453,8 +396,9 @@ namespace AzureMediaServiceMVC.Controllers
             // Create a locator to the streaming content on an origin.
             ILocator originLocator = context.Locators.CreateLocator(LocatorType.OnDemandOrigin, asset, policy, DateTime.UtcNow.AddMinutes(-5));
 
-            // Create a URL to the manifest file. 
-            return originLocator.Path + assetFile.Name;
+            // Create a URL to the manifest file.
+
+            return GetWithoutHttp(originLocator.Path + Path.GetFileNameWithoutExtension(filename) + ".ism/manifest");
         }
 
         static public void CreateAssetDeliveryPolicy(IAsset asset, IContentKey key)
@@ -556,7 +500,7 @@ namespace AzureMediaServiceMVC.Controllers
             return processor;
         }
 
-        private string GetWithoutHttp(string smoothStreamingUri)
+        private static string GetWithoutHttp(string smoothStreamingUri)
         {
             if (smoothStreamingUri.StartsWith("http:"))
             {

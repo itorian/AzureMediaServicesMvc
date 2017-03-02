@@ -20,16 +20,23 @@
     {
         <tr>
             <td>
-                <video id="vid1" class="azuremediaplayer amp-default-skin amp-big-play-centered" controls width="440" height="250" data-setup='{"logo": { "enabled": false }, "techOrder": ["azureHtml5JS", "flashSS", "silverlightSS", "html5"], "nativeControlsForTouch": false}'>
-                    @if (item.IsEncrypted)
+                @if (item.Status == "Finished")
+                {
+                    <video id="vid1" class="azuremediaplayer amp-default-skin amp-big-play-centered" controls width="440" height="250" data-setup='{"logo": { "enabled": false }, "techOrder": ["azureHtml5JS", "flashSS", "silverlightSS", "html5"], "nativeControlsForTouch": false}'>
+                        @if (item.IsEncrypted)
                     {
-                        <source src="@item.LocatorUri" type="application/vnd.ms-sstr+xml" data-setup='{"protectionInfo": [{"type": "AES", "authenticationToken": "@item.Token"}]}' />
-                    }
-                    else
-                    {
-                        <source src="@item.LocatorUri" type="application/vnd.ms-sstr+xml" />
-                    }
-                </video>
+                            <source src="@item.LocatorUri" type="application/vnd.ms-sstr+xml" data-setup='{"protectionInfo": [{"type": "AES", "authenticationToken": "@item.Token"}]}' />
+                        }
+                        else
+                        {
+                            <source src="@item.LocatorUri" type="application/vnd.ms-sstr+xml" />
+                        }
+                    </video>
+                }
+                else
+                {
+                    <p>This video is not ready for streaming.</p>
+                }
             </td>
             <td>
                 @Html.ActionLink("Delete", "Delete", new { id = item.Id })

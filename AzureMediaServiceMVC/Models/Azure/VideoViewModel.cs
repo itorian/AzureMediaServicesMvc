@@ -12,5 +12,6 @@ namespace AzureMediaServiceMVC.Models
         public string LocatorUri { get; set; }
         public bool IsEncrypted { get; set; }
         public string Token { get; set; }
+        public string Status { get; set; }
     }
 }

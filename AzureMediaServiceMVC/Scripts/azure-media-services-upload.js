@@ -119,6 +119,11 @@ var encodeFile = function (assetId) {
     }).done(function (state) {
         if (!state.error) {
             displayStatusMessage(state.message);
+            console.log("Asset Id: " + state.assetId);
+            console.log("Job Id: " + state.jobId);
+            console.log("Locator: " + state.locator);
+            console.log("Encrypted content or not: " + state.encrypted);
+            console.log("Token: " + state.token);
             getJobState(state.jobId, state.assetId);
         }
     }).fail(function (state) {
@@ -139,7 +144,7 @@ var getJobState = function (jobId, assetId) {
                 setTimeout(function () { getJobState(jobId, assetId); }, 5000);
             }
             if (data.state == "Finished") {
-                applyEncryption(assetId);
+                displayStatusMessage("Encoding job completed");
             }
         }
         else {
@@ -149,30 +154,6 @@ var getJobState = function (jobId, assetId) {
     })
     .fail(function () {
         displayStatusMessage("Encoding job status check error");
-    });
-}
-
-var applyEncryption = function (assetId) {
-    $.ajax({
-        type: "POST",
-        async: false,
-        url: "/Video/ProcessPolicyAndEncryption?assetId=" + assetId,
-    }).done(function (state) {
-        if (!state.error) {
-            displayStatusMessage(state.message);
-            if (state.encrypted) {
-                console.log(state.assetId);
-                console.log(state.locator);
-                console.log(state.token);
-            } else {
-                console.log(state.assetId);
-                console.log(state.locator);
-            }
-        }
-    }).fail(function (state) {
-        if (state.error) {
-            displayStatusMessage(state.message);
-        }
     });
 }
 
