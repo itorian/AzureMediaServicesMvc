@@ -2,8 +2,7 @@
     ViewBag.Title = "Home";
 }
 
-<div class="well" style="margin-top: 20px;">
-    @Html.ActionLink("Upload New Video", "Upload", "Video")
-    <br />
-    @Html.ActionLink("Play Videos", "Index", "Video")
-</div>
+<h2>Azure Media Services</h2>
+
+@Html.ActionLink("Upload Video", "upload", "video", null, new { @class = "btn btn-default" })
+@Html.ActionLink("Uploaded Videos", "index", "video", null, new { @class = "btn btn-default" })

@@ -13,12 +13,12 @@ using System.Collections.Generic;
 using AzureMediaServiceMVC.Models;
 using System.Security.Cryptography;
 using Microsoft.WindowsAzure.Storage;
+using AzureMediaServiceMVC.Models.Azure;
 using Microsoft.WindowsAzure.Storage.Blob;
 using Microsoft.WindowsAzure.MediaServices.Client;
 using Microsoft.WindowsAzure.Storage.RetryPolicies;
 using Microsoft.WindowsAzure.MediaServices.Client.DynamicEncryption;
 using Microsoft.WindowsAzure.MediaServices.Client.ContentKeyAuthorization;
-using AzureMediaServiceMVC.Models.Azure;
 
 namespace AzureMediaServiceMVC.Controllers
 {
