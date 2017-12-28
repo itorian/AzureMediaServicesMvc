@@ -24,25 +24,16 @@ namespace AzureMediaServiceMVC.Controllers
 {
     public class VideoController : Controller
     {
-        private static readonly string storageConnectionString = ConfigurationManager.AppSettings["StorageConnectionString"];
-        private static readonly string storageContainerReference = ConfigurationManager.AppSettings["StorageContainerReference"];
-        private static readonly string mediaAccountName = ConfigurationManager.AppSettings["MediaAccountName"];
-        private static readonly string mediaAccountKey = ConfigurationManager.AppSettings["MediaAccountKey"];
-        private static readonly string storageAccountName = ConfigurationManager.AppSettings["StorageAccountName"];
-        private static readonly string storageAccountKey = ConfigurationManager.AppSettings["StorageAccountKey"];
-
-        // A Uri describing the issuer of the token.  
-        // Must match the value in the token for the token to be considered valid.
-        private static readonly Uri _sampleIssuer = new Uri(ConfigurationManager.AppSettings["Issuer"]);
-
-        // The Audience or Scope of the token.  
-        // Must match the value in the token for the token to be considered valid.
-        private static readonly Uri _sampleAudience = new Uri(ConfigurationManager.AppSettings["Audience"]);
-
         private AzureMediaServicesContext db = new AzureMediaServicesContext();
 
-        private static readonly CloudMediaContext context = new CloudMediaContext(new MediaServicesCredentials(mediaAccountName, mediaAccountKey));
-        private static readonly bool useEncryption = true;
+        private static readonly string tempStorageConnectionString = ConfigurationManager.AppSettings["TempStorageConnectionString"];
+        private static readonly string tempStorageContainerReference = ConfigurationManager.AppSettings["TempStorageContainerReference"];
+
+        private static readonly string mediaServiceAccountName = ConfigurationManager.AppSettings["MediaServiceAccountName"];
+        private static readonly string mediaServiceAccountKey = ConfigurationManager.AppSettings["MediaServiceAccountKey"];
+
+        private static readonly CloudMediaContext context = new CloudMediaContext(new MediaServicesCredentials(mediaServiceAccountName, mediaServiceAccountKey));
+        private static readonly bool useAESRestriction = false;
 
         public ActionResult Index()
         {
@@ -79,7 +70,7 @@ namespace AzureMediaServiceMVC.Controllers
         [HttpPost]
         public ActionResult SetMetadata(int blocksCount, string fileName, long fileSize)
         {
-            var container = CloudStorageAccount.Parse(storageConnectionString).CreateCloudBlobClient().GetContainerReference(storageContainerReference);
+            var container = CloudStorageAccount.Parse(tempStorageConnectionString).CreateCloudBlobClient().GetContainerReference(tempStorageContainerReference);
 
             container.CreateIfNotExists();
 
@@ -193,9 +184,9 @@ namespace AzureMediaServiceMVC.Controllers
 
         private IAsset CreateMediaAsset(CloudFile model)
         {
-            CloudStorageAccount storageAccount = CloudStorageAccount.Parse(storageConnectionString);
+            CloudStorageAccount storageAccount = CloudStorageAccount.Parse(tempStorageConnectionString);
             CloudBlobClient cloudBlobClient = storageAccount.CreateCloudBlobClient();
-            CloudBlobContainer mediaBlobContainer = cloudBlobClient.GetContainerReference(storageContainerReference);
+            CloudBlobContainer mediaBlobContainer = cloudBlobClient.GetContainerReference(tempStorageContainerReference);
 
             mediaBlobContainer.CreateIfNotExists();
 
@@ -291,11 +282,11 @@ namespace AzureMediaServiceMVC.Controllers
             video.EncodingJobId = job.Id;
             video.EncodedAssetId = encodedAsset.Id;
             video.LocatorUri = smoothStreamingUri;
-            video.IsEncrypted = useEncryption;
+            video.IsEncrypted = useAESRestriction;
             db.Videos.Add(video);
             db.SaveChanges();
 
-            if (useEncryption)
+            if (useAESRestriction)
             {
                 token = AzureMediaAsset.GetTestToken(encodedAsset.Id, encodedAsset);
             }
@@ -311,7 +302,7 @@ namespace AzureMediaServiceMVC.Controllers
                 assetId = assetId,
                 jobId = job.Id,
                 locator = smoothStreamingUri,
-                encrypted = useEncryption,
+                encrypted = useAESRestriction,
                 token = token
             });
 
@@ -321,7 +312,7 @@ namespace AzureMediaServiceMVC.Controllers
         {
             IContentKey key = CreateEnvelopeTypeContentKey(asset);
 
-            if (useEncryption)
+            if (useAESRestriction)
             {
                 // AES restriction
                 AddTokenRestrictedAuthorizationPolicy(key);
@@ -470,8 +461,8 @@ namespace AzureMediaServiceMVC.Controllers
 
             template.PrimaryVerificationKey = new SymmetricVerificationKey();
             template.AlternateVerificationKeys.Add(new SymmetricVerificationKey());
-            template.Audience = _sampleAudience.ToString();
-            template.Issuer = _sampleIssuer.ToString();
+            template.Audience = ConfigurationManager.AppSettings["Audience"];
+            template.Issuer = ConfigurationManager.AppSettings["Issuer"];
 
             template.RequiredClaims.Add(TokenClaim.ContentKeyIdentifierClaim);
 

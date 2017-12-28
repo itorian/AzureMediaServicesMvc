@@ -166,6 +166,6 @@ var updateProgress = function () {
     var progress = currentChunk / numberOfBlocks * 100;
     if (progress <= 100) {
         $("#progressBar").progressbar("option", "value", parseInt(progress));
-        displayStatusMessage("Uploaded " + parseInt(progress) + "%");
+        displayStatusMessage("Please wait, uploaded " + parseInt(progress) + "%");
     }
 }
