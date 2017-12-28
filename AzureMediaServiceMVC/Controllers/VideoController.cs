@@ -25,15 +25,14 @@ namespace AzureMediaServiceMVC.Controllers
     public class VideoController : Controller
     {
         private AzureMediaServicesContext db = new AzureMediaServicesContext();
+        private static readonly bool useAESRestriction = false;
 
         private static readonly string tempStorageConnectionString = ConfigurationManager.AppSettings["TempStorageConnectionString"];
         private static readonly string tempStorageContainerReference = ConfigurationManager.AppSettings["TempStorageContainerReference"];
 
         private static readonly string mediaServiceAccountName = ConfigurationManager.AppSettings["MediaServiceAccountName"];
         private static readonly string mediaServiceAccountKey = ConfigurationManager.AppSettings["MediaServiceAccountKey"];
-
         private static readonly CloudMediaContext context = new CloudMediaContext(new MediaServicesCredentials(mediaServiceAccountName, mediaServiceAccountKey));
-        private static readonly bool useAESRestriction = false;
 
         public ActionResult Index()
         {
