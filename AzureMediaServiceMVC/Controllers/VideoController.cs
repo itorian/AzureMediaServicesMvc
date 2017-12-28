@@ -27,8 +27,8 @@ namespace AzureMediaServiceMVC.Controllers
         private AzureMediaServicesContext db = new AzureMediaServicesContext();
         private static readonly bool useAESRestriction = false;
 
-        private static readonly string tempStorageConnectionString = ConfigurationManager.AppSettings["TempStorageConnectionString"];
-        private static readonly string tempStorageContainerReference = ConfigurationManager.AppSettings["TempStorageContainerReference"];
+        private static readonly string mediaServiceStorageConnectionString = ConfigurationManager.AppSettings["MediaServiceStorageConnectionString"];
+        private static readonly string mediaServiceStorageContainerReference = ConfigurationManager.AppSettings["MediaServiceStorageContainerReference"];
 
         private static readonly string mediaServiceAccountName = ConfigurationManager.AppSettings["MediaServiceAccountName"];
         private static readonly string mediaServiceAccountKey = ConfigurationManager.AppSettings["MediaServiceAccountKey"];
@@ -69,7 +69,7 @@ namespace AzureMediaServiceMVC.Controllers
         [HttpPost]
         public ActionResult SetMetadata(int blocksCount, string fileName, long fileSize)
         {
-            var container = CloudStorageAccount.Parse(tempStorageConnectionString).CreateCloudBlobClient().GetContainerReference(tempStorageContainerReference);
+            var container = CloudStorageAccount.Parse(mediaServiceStorageConnectionString).CreateCloudBlobClient().GetContainerReference(mediaServiceStorageContainerReference);
 
             container.CreateIfNotExists();
 
@@ -183,9 +183,9 @@ namespace AzureMediaServiceMVC.Controllers
 
         private IAsset CreateMediaAsset(CloudFile model)
         {
-            CloudStorageAccount storageAccount = CloudStorageAccount.Parse(tempStorageConnectionString);
+            CloudStorageAccount storageAccount = CloudStorageAccount.Parse(mediaServiceStorageConnectionString);
             CloudBlobClient cloudBlobClient = storageAccount.CreateCloudBlobClient();
-            CloudBlobContainer mediaBlobContainer = cloudBlobClient.GetContainerReference(tempStorageContainerReference);
+            CloudBlobContainer mediaBlobContainer = cloudBlobClient.GetContainerReference(mediaServiceStorageContainerReference);
 
             mediaBlobContainer.CreateIfNotExists();
 
