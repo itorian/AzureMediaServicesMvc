@@ -9,10 +9,19 @@ namespace AzureMediaServiceMVC.Models.Azure
 {
     public static class AzureMediaAsset
     {
-        private static readonly string mediaAccountName = ConfigurationManager.AppSettings["MediaAccountName"];
-        private static readonly string mediaAccountKey = ConfigurationManager.AppSettings["MediaAccountKey"];
+        //// DEPRECATED method
+        //private static readonly string mediaAccountName = ConfigurationManager.AppSettings["MediaAccountName"];
+        //private static readonly string mediaAccountKey = ConfigurationManager.AppSettings["MediaAccountKey"];
+        //private static readonly CloudMediaContext context = new CloudMediaContext(new MediaServicesCredentials(mediaAccountName, mediaAccountKey));
 
-        private static readonly CloudMediaContext context = new CloudMediaContext(new MediaServicesCredentials(mediaAccountName, mediaAccountKey));
+        //// Azure Active Directory (AAD)
+        private static readonly string mediaServiceADTenantDomain = ConfigurationManager.AppSettings["MediaServiceADTenantDomain"];
+        private static readonly string mediaServiceADRestApiEndpoint = ConfigurationManager.AppSettings["MediaServiceADRestApiEndpoint"];
+        private static readonly string mediaServiceADApplicationId = ConfigurationManager.AppSettings["MediaServiceADApplicationId"];
+        private static readonly string mediaServiceADApplicationSecret = ConfigurationManager.AppSettings["MediaServiceADApplicationSecret"];
+        private static readonly AzureAdTokenCredentials azureAdTokenCredentials = new AzureAdTokenCredentials(mediaServiceADTenantDomain, new AzureAdClientSymmetricKey(mediaServiceADApplicationId, mediaServiceADApplicationSecret), AzureEnvironments.AzureCloudEnvironment);
+        private static readonly AzureAdTokenProvider azureAdTokenProvider = new AzureAdTokenProvider(azureAdTokenCredentials);
+        private static readonly CloudMediaContext context = new CloudMediaContext(new Uri(mediaServiceADRestApiEndpoint), azureAdTokenProvider);
 
         public static string GetTestToken(string assetid, IAsset asset = null)
         {

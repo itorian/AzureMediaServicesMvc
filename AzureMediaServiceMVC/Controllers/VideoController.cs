@@ -30,9 +30,19 @@ namespace AzureMediaServiceMVC.Controllers
         private static readonly string mediaServiceStorageConnectionString = ConfigurationManager.AppSettings["MediaServiceStorageConnectionString"];
         private static readonly string mediaServiceStorageContainerReference = ConfigurationManager.AppSettings["MediaServiceStorageContainerReference"];
 
-        private static readonly string mediaServiceAccountName = ConfigurationManager.AppSettings["MediaServiceAccountName"];
-        private static readonly string mediaServiceAccountKey = ConfigurationManager.AppSettings["MediaServiceAccountKey"];
-        private static readonly CloudMediaContext context = new CloudMediaContext(new MediaServicesCredentials(mediaServiceAccountName, mediaServiceAccountKey));
+        //// DEPRECATED method
+        //private static readonly string mediaServiceAccountName = ConfigurationManager.AppSettings["MediaServiceAccountName"];
+        //private static readonly string mediaServiceAccountKey = ConfigurationManager.AppSettings["MediaServiceAccountKey"];
+        //private static readonly CloudMediaContext context = new CloudMediaContext(new MediaServicesCredentials(mediaServiceAccountName, mediaServiceAccountKey));
+
+        //// Azure Active Directory (AAD)
+        private static readonly string mediaServiceADTenantDomain = ConfigurationManager.AppSettings["MediaServiceADTenantDomain"];
+        private static readonly string mediaServiceADRestApiEndpoint = ConfigurationManager.AppSettings["MediaServiceADRestApiEndpoint"];
+        private static readonly string mediaServiceADApplicationId = ConfigurationManager.AppSettings["MediaServiceADApplicationId"];
+        private static readonly string mediaServiceADApplicationSecret = ConfigurationManager.AppSettings["MediaServiceADApplicationSecret"];
+        private static readonly AzureAdTokenCredentials azureAdTokenCredentials = new AzureAdTokenCredentials(mediaServiceADTenantDomain, new AzureAdClientSymmetricKey(mediaServiceADApplicationId, mediaServiceADApplicationSecret), AzureEnvironments.AzureCloudEnvironment);
+        private static readonly AzureAdTokenProvider azureAdTokenProvider = new AzureAdTokenProvider(azureAdTokenCredentials);
+        private static readonly CloudMediaContext context = new CloudMediaContext(new Uri(mediaServiceADRestApiEndpoint), azureAdTokenProvider);
 
         public ActionResult Index()
         {
